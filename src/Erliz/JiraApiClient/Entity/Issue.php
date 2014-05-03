@@ -8,7 +8,7 @@ use Closure;
  * Issue.
  *
  * @author Stanislav Vetlovskiy <s.vetlovskiy@corp.mail.ru>
- */ 
+ */
 class Issue extends CommonEntity
 {
     /** @var string */
@@ -17,6 +17,10 @@ class Issue extends CommonEntity
     private $type;
     /** @var IssueStatus */
     private $status;
+    /** @var IssuePriority */
+    private $priority;
+    /** @var Issue */
+    private $parent;
     /** @var Issue[] */
     private $subTasks;
     /** @var string */
@@ -35,6 +39,10 @@ class Issue extends CommonEntity
     private $labels;
     /** @var Version[] */
     private $versions;
+    /** @var Resolution */
+    private $resolution;
+    /** @var \DateTime */
+    private $resolvedAt;
     /** @var User */
     private $assignee;
     /** @var User */
@@ -67,14 +75,19 @@ class Issue extends CommonEntity
 
     private function fillIssue()
     {
-        if($this->fullIssue){
+        if ($this->fullIssue) {
             return;
         }
         call_user_func($this->fillIssueReference, $this);
         $this->fullIssue = true;
     }
 
-    public function setProject($project)
+    /**
+     * @param Project $project
+     *
+     * @return $this
+     */
+    public function setProject(Project $project)
     {
         $this->project = $project;
 
@@ -86,7 +99,7 @@ class Issue extends CommonEntity
      */
     public function getProject()
     {
-        if(empty($this->project)){
+        if (empty($this->project)) {
             $this->fillIssue();
         }
 
@@ -190,6 +203,10 @@ class Issue extends CommonEntity
 
     public function getLinks()
     {
+        if (empty($this->links)) {
+            $this->fillIssue();
+        }
+
         return $this->links;
     }
 
@@ -237,6 +254,10 @@ class Issue extends CommonEntity
      */
     public function getSubTasks()
     {
+        if (empty($this->subTasks)) {
+            $this->fillIssue();
+        }
+
         return $this->subTasks;
     }
 
@@ -253,6 +274,10 @@ class Issue extends CommonEntity
      */
     public function getDescription()
     {
+        if (empty($this->description)) {
+            $this->fillIssue();
+        }
+
         return $this->description;
     }
 
@@ -261,6 +286,10 @@ class Issue extends CommonEntity
      */
     public function getCreatedAt()
     {
+        if (empty($this->createdAt)) {
+            $this->fillIssue();
+        }
+
         return $this->createdAt;
     }
 
@@ -269,6 +298,10 @@ class Issue extends CommonEntity
      */
     public function getComponents()
     {
+        if (empty($this->components)) {
+            $this->fillIssue();
+        }
+
         return $this->components;
     }
 
@@ -277,7 +310,7 @@ class Issue extends CommonEntity
      */
     public function getLabels()
     {
-        if(empty($this->labels)){
+        if (empty($this->labels)) {
             $this->fillIssue();
         }
 
@@ -289,6 +322,10 @@ class Issue extends CommonEntity
      */
     public function getVersions()
     {
+        if (empty($this->versions)) {
+            $this->fillIssue();
+        }
+
         return $this->versions;
     }
 
@@ -297,6 +334,10 @@ class Issue extends CommonEntity
      */
     public function getAssignee()
     {
+        if (empty($this->assignee)) {
+            $this->fillIssue();
+        }
+
         return $this->assignee;
     }
 
@@ -305,6 +346,10 @@ class Issue extends CommonEntity
      */
     public function getReporter()
     {
+        if (empty($this->reporter)) {
+            $this->fillIssue();
+        }
+
         return $this->reporter;
     }
 
@@ -313,6 +358,10 @@ class Issue extends CommonEntity
      */
     public function getComments()
     {
+        if (empty($this->comments)) {
+            $this->fillIssue();
+        }
+
         return $this->comments;
     }
 
@@ -360,6 +409,98 @@ class Issue extends CommonEntity
     public function setLabels($labels)
     {
         $this->labels = $labels;
+
+        return $this;
+    }
+
+    /**
+     * @return IssuePriority
+     */
+    public function getPriority()
+    {
+        return $this->priority;
+    }
+
+    /**
+     * @param IssuePriority $priority
+     *
+     * @return $this
+     */
+    public function setPriority(IssuePriority $priority)
+    {
+        $this->priority = $priority;
+
+        return $this;
+    }
+
+    /**
+     * @return Issue
+     */
+    public function getParent()
+    {
+        if (empty($this->parent) && $this->type->isSubTask()) {
+            $this->fillIssue();
+        }
+
+        return $this->parent;
+    }
+
+    /**
+     * @param Issue $parent
+     *
+     * @return $this
+     */
+    public function setParent(Issue $parent)
+    {
+        $this->parent = $parent;
+
+        return $this;
+    }
+
+    /**
+     * @return Resolution
+     */
+    public function getResolution()
+    {
+        if (empty($this->resolution)) {
+            $this->fillIssue();
+        }
+
+        return $this->resolution;
+    }
+
+    /**
+     * @param Resolution $resolution
+     *
+     * @return $this
+     */
+    public function setResolution(Resolution $resolution)
+    {
+        $this->resolution = $resolution;
+
+        return $this;
+    }
+
+    /**
+     * @return \DateTime
+     */
+    public function getResolvedAt()
+    {
+        if (empty($this->resolvedAt)) {
+            $this->fillIssue();
+        }
+
+        return $this->resolvedAt;
+    }
+
+    /**
+     * @param \DateTime $resolvedAt
+     *
+     * @return $this
+     */
+    public function setResolvedAt(\DateTime $resolvedAt)
+    {
+        $this->resolvedAt = $resolvedAt;
 
         return $this;
     }

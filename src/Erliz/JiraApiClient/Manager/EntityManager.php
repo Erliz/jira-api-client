@@ -14,24 +14,28 @@ use Erliz\JiraApiClient\Entity\Component;
 use Erliz\JiraApiClient\Entity\Issue;
 use Erliz\JiraApiClient\Entity\IssueLink;
 use Erliz\JiraApiClient\Entity\IssueLinkType;
+use Erliz\JiraApiClient\Entity\IssuePriority;
 use Erliz\JiraApiClient\Entity\IssueStatus;
 use Erliz\JiraApiClient\Entity\IssueType;
 use Erliz\JiraApiClient\Entity\Project;
+use Erliz\JiraApiClient\Entity\Resolution;
 use Erliz\JiraApiClient\Entity\User;
 use Erliz\JiraApiClient\Entity\Version;
 
 class EntityManager
 {
+    const COMPONENT_CACHE_KEY       = 'component';
+    const COMMENT_CACHE_KEY         = 'comment';
     const ISSUE_CACHE_KEY           = 'issue';
-    const ISSUE_STATUS_CACHE_KEY    = 'issue_status';
-    const ISSUE_TYPE_CACHE_KEY      = 'issue_type';
     const ISSUE_LINK_CACHE_KEY      = 'issue_link';
     const ISSUE_LINK_TYPE_CACHE_KEY = 'issue_link_type';
+    const ISSUE_PRIORITY_CACHE_KEY  = 'issue_priority';
+    const ISSUE_STATUS_CACHE_KEY    = 'issue_status';
+    const ISSUE_TYPE_CACHE_KEY      = 'issue_type';
     const PROJECT_CACHE_KEY         = 'project';
-    const COMPONENT_CACHE_KEY       = 'component';
-    const VERSION_CACHE_KEY         = 'version';
+    const RESOLUTION_CACHE_KEY      = 'resolution';
     const USER_CACHE_KEY            = 'user';
-    const COMMENT_CACHE_KEY         = 'comment';
+    const VERSION_CACHE_KEY         = 'version';
 
     /** @var array */
     private $cache = array();
@@ -79,16 +83,16 @@ class EntityManager
      *
      * @return Issue
      */
-    private function fillIssueWithData(Issue $issue, \stdClass $data)
+    public function fillIssueWithData(Issue $issue, \stdClass $data)
     {
         $issue->setId($data->id)
               ->setKey($data->key);
 
-        if(isset($data->description)) {
-            $issue->setDescription($data->description);
-        }
-
         $fields = $data->fields;
+
+        if(isset($fields->description)) {
+            $issue->setDescription($fields->description);
+        }
 
         $issue->setSummary($fields->summary)
               ->setStatus($this->newIssueStatus($fields->status))
@@ -103,11 +107,17 @@ class EntityManager
             }
         }
 
+        if(isset($fields->parent)) {
+            $issue->setParent($this->newIssue($fields->parent));
+        }
         if(isset($fields->labels)) {
             $issue->setLabels($fields->labels);
         }
         if(isset($fields->created)) {
             $issue->setCreatedAt(new \DateTime($fields->created));
+        }
+        if(isset($fields->priority)) {
+            $issue->setPriority($this->newIssuePriority($fields->priority));
         }
         if(isset($fields->components)) {
             $components = array();
@@ -119,18 +129,24 @@ class EntityManager
         }
         if(isset($fields->fixVersions)) {
             $versions = array();
-            foreach($fields->versions as $version) {
+            foreach($fields->fixVersions as $version) {
                 $versions[] = $this->newVersion($version);
             }
 
             $issue->setVersions($versions);
         }
+        if (isset($fields->resolution)) {
+            $issue->setResolution($this->newResolution($fields->resolution));
+            if (isset($fields->resolutiondate)) {
+                $issue->setResolvedAt(new \DateTime($fields->resolutiondate));
+            }
+        }
         if(isset($fields->subtasks)) {
             $subTasks = array();
             foreach($fields->subtasks as $task) {
                 $subTask = $this->newIssue($task);
-                $subTask->setProject($this->newProject($issue->getProject()));
-                $subTasks[] = $this->newIssue($subTask);
+                $subTask->setProject($issue->getProject());
+                $subTasks[] = $subTask;
             }
 
             $issue->setSubTasks($subTasks);
@@ -257,8 +273,11 @@ class EntityManager
         }
 
         $component->setId($componentData->id)
-                  ->setName($componentData->name)
-                  ->setDescription($componentData->description);
+                  ->setName($componentData->name);
+
+        if (isset($componentData->description)) {
+            $component->setDescription($componentData->description);
+        }
 
         $this->addToCache($this::COMPONENT_CACHE_KEY, $component);
 
@@ -380,6 +399,48 @@ class EntityManager
         $this->addToCache($this::ISSUE_LINK_TYPE_CACHE_KEY, $type);
 
         return $type;
+    }
+
+    /**
+     * @param \stdClass $priorityData
+     *
+     * @return IssuePriority
+     */
+    public function newIssuePriority(\stdClass $priorityData)
+    {
+        $priority = $this->getFromCache($this::ISSUE_PRIORITY_CACHE_KEY, $priorityData) ? : new IssuePriority();
+        if(empty($priorityData) || $priority->getId()){
+            return $priority;
+        }
+
+        $priority->setId($priorityData->id)
+                 ->setName($priorityData->name)
+                 ->setIconUrl($priorityData->iconUrl);
+
+        $this->addToCache($this::ISSUE_PRIORITY_CACHE_KEY, $priority);
+
+        return $priority;
+    }
+
+    /**
+     * @param \stdClass $resolutionData
+     *
+     * @return Resolution
+     */
+    public function newResolution(\stdClass $resolutionData)
+    {
+        $resolution = $this->getFromCache($this::RESOLUTION_CACHE_KEY, $resolutionData) ? : new Resolution();
+        if(empty($resolutionData) || $resolution->getId()){
+            return $resolution;
+        }
+
+        $resolution->setId($resolutionData->id)
+                   ->setName($resolutionData->name)
+                   ->setDescription($resolutionData->description);
+
+        $this->addToCache($this::RESOLUTION_CACHE_KEY, $resolution);
+
+        return $resolution;
     }
 
     /**
