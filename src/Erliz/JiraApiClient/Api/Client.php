@@ -66,18 +66,41 @@ class Client
 
     /**
      * @param string $key
+     * @param string $action
      *
      * @return \stdClass
      */
-    public function getIssueData($key)
+    public function getIssueData($key, $action = '')
     {
         return $this->client->get(
             $this->getUrl(
                 sprintf(
                     'issue/%s',
                     strtoupper($key)
-                )
+                ) .
+                (!empty($action) ? ('/' . $action) : '')
             )
+        );
+    }
+
+    /**
+     * todo must get an issue
+     *
+     * @param string $key
+     * @param array  $fields
+     *
+     * @return
+     */
+    public function updateIssueData($key, $fields)
+    {
+        return $this->client->put(
+            $this->getUrl(
+                sprintf(
+                    'issue/%s',
+                    strtoupper($key)
+                )
+            ),
+            $fields
         );
     }
 
@@ -108,6 +131,16 @@ class Client
     }
 
     /**
+     * @param string $key issue key
+     *
+     * @return \stdClass
+     */
+    public function getEditMeta($key)
+    {
+        return $this->getIssueData($key, 'editmeta');
+    }
+
+    /**
      * @param string $action
      * @param array  $params
      * @param string $type
@@ -134,6 +167,8 @@ class Client
     public function setHttpClient(ClientInterface $client)
     {
         $this->client = $client;
+        $this->client->addHeader('Content-Accept', 'application/json');
+        $this->client->addHeader('Content-Type', 'application/json;charset=UTF-8');
         if (!empty($this->encodeCredentials)) {
             $this->setAuthorizationHeader();
         }

@@ -16,6 +16,7 @@ interface ClientInterface
      */
     public function get($url);
     public function post($url, $params);
+    public function put($url, $params);
 
     /**
      * @param string $name

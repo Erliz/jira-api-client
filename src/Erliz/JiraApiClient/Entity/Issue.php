@@ -63,7 +63,7 @@ class Issue extends CommonEntity
         return preg_replace('/(\-\d+)/', '', $issueKey);
     }
 
-    public function isFullIssue()
+    private function isFullIssue()
     {
         return $this->fullIssue;
     }
@@ -75,7 +75,7 @@ class Issue extends CommonEntity
 
     private function fillIssue()
     {
-        if ($this->fullIssue) {
+        if ($this->isFullIssue()) {
             return;
         }
         call_user_func($this->fillIssueReference, $this);
