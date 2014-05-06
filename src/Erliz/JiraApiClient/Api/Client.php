@@ -88,12 +88,10 @@ class Client
      *
      * @param string $key
      * @param array  $fields
-     *
-     * @return
      */
-    public function updateIssueData($key, $fields)
+    public function updateIssueData($key, array $fields)
     {
-        return $this->client->put(
+        $this->client->put(
             $this->getUrl(
                 sprintf(
                     'issue/%s',
@@ -138,6 +136,23 @@ class Client
     public function getEditMeta($key)
     {
         return $this->getIssueData($key, 'editmeta');
+    }
+
+    /**
+     * @param string $key
+     * @param array $comment
+     */
+    public function addCommentData($key, array $comment)
+    {
+        $this->client->post(
+            $this->getUrl(
+                sprintf(
+                    'issue/%s/comment',
+                    strtoupper($key)
+                )
+            ),
+            $comment
+        );
     }
 
     /**
