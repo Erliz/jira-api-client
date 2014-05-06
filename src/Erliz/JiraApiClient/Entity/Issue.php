@@ -406,9 +406,23 @@ class Issue extends CommonEntity
      *
      * @return $this
      */
-    public function setLabels($labels)
+    public function setLabels(array $labels)
     {
-        $this->labels = $labels;
+        // reset array key
+        $this->labels = array_values($labels);
+
+        return $this;
+    }
+
+    /**
+     * @param string $labels
+     *
+     * @return $this
+     */
+    public function addLabel($labels)
+    {
+        $this->labels[] = $labels;
+        $this->labels = array_unique($this->labels);
 
         return $this;
     }
