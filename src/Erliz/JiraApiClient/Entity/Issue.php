@@ -27,6 +27,8 @@ class Issue extends CommonEntity
     private $summary;
     /** @var string */
     private $description;
+    /** @var Transition[] */
+    private $transitions;
     /** @var IssueLink[] */
     private $links;
     /** @var \DateTime */
@@ -517,5 +519,65 @@ class Issue extends CommonEntity
         $this->resolvedAt = $resolvedAt;
 
         return $this;
+    }
+
+    /**
+     * @return Transition[]
+     */
+    public function getTransitions()
+    {
+        if (empty($this->transitions)) {
+            $this->fillIssue();
+        }
+
+        return $this->transitions;
+    }
+
+    /**
+     * @param Transition[] $transitions
+     *
+     * @return $this
+     */
+    public function setTransitions(array $transitions)
+    {
+        $this->transitions = $transitions;
+
+        return $this;
+    }
+
+    /**
+     * @param string $key transition id or name
+     *
+     * @return bool
+     */
+    public function haveTransition($key)
+    {
+        return !!$this->getTransition($key);
+    }
+
+    /**
+     * @param string $key transition id or name
+     *
+     * @return Transition
+     */
+    public function getTransition($key)
+    {
+        $isId = false;
+        if (is_numeric($key)) {
+            $isId = true;
+        }
+        $findTransition = false;
+
+        foreach ($this->getTransitions() as $transition) {
+            if($isId && $transition->getId() == $key) {
+                $findTransition = $transition;
+                break;
+            } elseif (!$isId && $transition->getName() == $key) {
+                $findTransition = $transition;
+                break;
+            }
+        }
+
+        return $findTransition;
     }
 }

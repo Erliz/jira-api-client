@@ -19,6 +19,7 @@ use Erliz\JiraApiClient\Entity\IssueStatus;
 use Erliz\JiraApiClient\Entity\IssueType;
 use Erliz\JiraApiClient\Entity\Project;
 use Erliz\JiraApiClient\Entity\Resolution;
+use Erliz\JiraApiClient\Entity\Transition;
 use Erliz\JiraApiClient\Entity\User;
 use Erliz\JiraApiClient\Entity\Version;
 
@@ -34,6 +35,7 @@ class EntityManager
     const ISSUE_TYPE_CACHE_KEY      = 'issue_type';
     const PROJECT_CACHE_KEY         = 'project';
     const RESOLUTION_CACHE_KEY      = 'resolution';
+    const TRANSITION_CACHE_KEY      = 'transition';
     const USER_CACHE_KEY            = 'user';
     const VERSION_CACHE_KEY         = 'version';
 
@@ -175,6 +177,14 @@ class EntityManager
             $issue->setLinks($links);
         }
 
+        if (isset($data->transitions)) {
+            $transitions = array();
+            foreach ($data->transitions as $transition) {
+                $transitions[] = $this->newTransition($transition);
+            }
+            $issue->setTransitions($transitions);
+        }
+        
         return $issue;
     }
 
@@ -441,6 +451,22 @@ class EntityManager
         $this->addToCache($this::RESOLUTION_CACHE_KEY, $resolution);
 
         return $resolution;
+    }
+
+    public function newTransition($transitionData)
+    {
+        $transition = $this->getFromCache($this::TRANSITION_CACHE_KEY, $transitionData) ? : new Transition();
+        if(empty($transitionData) || $transition->getId()){
+            return $transition;
+        }
+
+        $transition->setId($transitionData->id)
+                   ->setName($transitionData->name)
+                   ->setStatus($this->newIssueStatus($transitionData->to));
+
+        $this->addToCache($this::TRANSITION_CACHE_KEY, $transition);
+
+        return $transition;
     }
 
     /**

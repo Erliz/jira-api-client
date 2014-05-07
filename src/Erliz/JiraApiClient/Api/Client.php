@@ -78,7 +78,7 @@ class Client
                     'issue/%s',
                     strtoupper($key)
                 ) .
-                (!empty($action) ? ('/' . $action) : '')
+                (!empty($action) ? ('/' . $action) : '?expand=transitions')
             )
         );
     }
@@ -152,6 +152,19 @@ class Client
                 )
             ),
             $comment
+        );
+    }
+
+    public function transitIssue($key, $transition)
+    {
+        $this->client->post(
+            $this->getUrl(
+                sprintf(
+                    'issue/%s/transitions',
+                    strtoupper($key)
+                )
+            ),
+            $transition
         );
     }
 
